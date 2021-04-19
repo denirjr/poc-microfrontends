@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src *  data: blob: 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * data: blob: 'unsafe-inline'; font-src * data: blob: 'unsafe-inline';"
+    />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Your application</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="importmap-type" content="systemjs-importmap" />
+    <script type="systemjs-importmap">
+      {
+        "imports": {
+          "child1": "http://localhost:4201/main.js",
+          "child2": "http://localhost:4202/main.js",
+          "nav-bar": "http://localhost:4300/main.js",
+          "single-spa": "node_modules/single-spa/lib/system/single-spa.min.js",
+          "single-spa-layout": "node_modules/single-spa-layout/dist/system/single-spa-layout.min.js"
+        }
+      }
+    </script>
+    <link
+      rel="preload"
+      href="node_modules/single-spa/lib/system/single-spa.min.js"
+      as="script"
+      crossorigin="anonymous"
+    />
+    <script src="node_modules/core-js-bundle/minified.js"></script>
+    <script src="node_modules/import-map-overrides/dist/import-map-overrides.js"></script>
+    <script src="node_modules/zone.js/dist/zone.js"></script>
+    <script src="node_modules/systemjs/dist/system.min.js"></script>
+    <script src="node_modules/systemjs/dist/extras/amd.min.js"></script>
+    <script src="node_modules/systemjs/dist/extras/named-exports.min.js"></script>
+    <script src="node_modules/systemjs/dist/extras/named-register.min.js"></script>
+
+    <template id="single-spa-layout">
+      <single-spa-router>
+        <nav class="leftnav">
+          <application name="nav-bar"></application>
+        </nav>
+        <div class="main-content">
+          <route path="child1">
+            <application name="child1"></application>
+          </route>
+          <route path="child2">
+            <application name="child2"></application>
+          </route>
+        </div>
+      </single-spa-router>
+    </template>
+  </head>
+  <body>
+    <script>
+      Promise.all([
+        System.import("single-spa"),
+        System.import("single-spa-layout"),
+      ]).then(([singleSpa, singleSpaLayout]) => {
+        const {
+          constructApplications,
+          constructLayoutEngine,
+          constructRoutes,
+        } = singleSpaLayout;
+        const { registerApplication, start } = singleSpa;
+
+        const routes = constructRoutes(
+          document.querySelector("#single-spa-layout")
+        );
+        const applications = constructApplications({
+          routes,
+          loadApp({ name }) {
+            return System.import(name);
+          },
+        });
+        const layoutEngine = constructLayoutEngine({ routes, applications });
+        applications.forEach(registerApplication);
+
+        start();
+      });
+    </script>
+    <import-map-overrides-full></import-map-overrides-full>
+  </body>
+</html>
